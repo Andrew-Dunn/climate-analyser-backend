@@ -1,7 +1,7 @@
 #
-# Zoo Adapter for Correlate
+# Operation Manager
 # Author:		Robert Sinn
-# Last modified: 13 May 2014
+# Last modified: xx xx 2014
 #
 # This file is part of Climate Analyser.
 #
@@ -22,9 +22,7 @@
 
 import sys
 import requests
-import correlation
-import convolute
-import regresion
+import jobSelect
 import os.path
 import os
 import string
@@ -59,6 +57,17 @@ def getVariables(url):
 def dataLink(serverAddr,url):
 	return (serverAddr + "/thredds/dodsC/datafiles/inputs/" + 
 					getFileNameFromUrl(url) + getVariables(url))
+
+def compileArray(func,urls):
+        for x in range(0, len(urls)):
+                urls[x] = func(urls[x])
+	return urls
+
+def compileVarArray(serverAddr,urls):
+        for x in range(0, len(urls)):
+                urls[x] = dataLink(serverAddr,urls[x])
+        return urls
+
 
 def readFileExistsInThredds(name):
 	return os.path.isfile(name)
@@ -149,14 +158,22 @@ def Operation(Urls,Selection,Jobid):
        
 	filecheck(urls)
 	
-	if Selection == "correlate":
-		result = correlation.runCorrelate(getLocation(urls[0]),
-				getLocation(urls[1]), outputFile)
-	if Selection == "convolute":
-		result = convolute.runConvolute(getLocation(urls[0]),
-				getLocation(urls[1]), outputFile)
-	if Selection == "regres":
-		regresion.runRegres(dataLink(serverAddr,urls[0]),outputFile)
+	#if Selection == "correlate":
+	#	result = correlation.runCorrelate(getLocation(urls[0]),
+	#			getLocation(urls[1]), outputFile)
+	#if Selection == "convolute":
+	#	result = convolute.runConvolute(getLocation(urls[0]),
+	#			getLocation(urls[1]), outputFile)
+	#if Selection == "regres":
+	#	regresion.runRegres(dataLink(serverAddr,urls[0]),outputFile)
+        try:
+                if Selection.startswith('cdo'):
+                        jobSelect.jobSelect(Selection,compileArray(dataLink,urls),[outputFile])
+                else:
+                        jobSelect.jobSelect(Selection,compileArray(getLocation,urls),[outputFile])
+        except:
+                jobStatus(Jobid,'7')
+
 
 	jobStatus(Jobid,'2')
         return  
