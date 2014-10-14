@@ -22,9 +22,9 @@
 
 import sys
 from operators import *
-import operators as opps
+import operators as ops
 
-def checkOpp(operation,option,inputFiles,outputFiles,incount = -1,outcount = -1):
+def checkOp(operation,option,inputFiles,outputFiles,incount = -1,outcount = -1):
 	if option == operation:
 		if len(inputFiles) != incount and incount != -1:
 			raise Exception("Insufficent input files")
@@ -34,20 +34,20 @@ def checkOpp(operation,option,inputFiles,outputFiles,incount = -1,outcount = -1)
 
 	return 0
 
-def jobSelect(opp,inputFiles,outputFiles):
-	if opp.startswith('cdo-'):
-		func = opps.cdoOpps.cdoOpps(opp.split('-')[1],inputFiles,outputFiles)
-		func(input = opps.cdoOpps.cdoCallString(inputFiles)
-			,output = opps.cdoOpps.cdoCallString(outputFiles))
+def jobSelect(op,inputFiles,outputFiles):
+	if op.startswith('cdo-'):
+		func = ops.cdoOps.cdoOps(op.split('-')[1],inputFiles,outputFiles)
+		func(input = ops.cdoOps.cdoCallString(inputFiles)
+			,output = ops.cdoOps.cdoCallString(outputFiles))
 		return
 
-	#if checkOpp('correlate',opp,inputFiles,outputFiles,2,1):
+	#if checkOp('correlate',op,inputFiles,outputFiles,2,1):
 	#	func = correlate.run(inputFiles[0],inputFiles[1],outputFiles[0])
-	#elif checkOpp('convolute',opp,inputFiles,outputFiles,2,1):
+	#elif checkOp('convolute',op,inputFiles,outputFiles,2,1):
 	#	func = convolute.run(inputFiles[0],inputFiles[1],outputFiles[0])
 	#else:
 	
-	mod = getattr(opps,opp)
+	mod = getattr(ops,op)
 	func = getattr(mod,'run')
 	
 	func(inputFiles,outputFiles)

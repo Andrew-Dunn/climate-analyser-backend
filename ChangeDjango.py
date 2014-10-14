@@ -9,7 +9,7 @@ def ChangeDjango(conf,inputs,outputs):
 	privatefile = open('rsa/privateKey.pem')
 	keydata = privatefile.read()
 	privatekey = rsa.PrivateKey.load_pkcs1(keydata)
-	unquote = urllib.unquote(base64.b64decode(crypto))
+	unquote = base64.b16decode(crypto)
 	#try:
 	newurl = rsa.decrypt(unquote,privatekey)
 	#except:

@@ -131,14 +131,14 @@ def jobStatus(jobid,status):
 
 def encryptField(pubkey, value):
 	crypto = rsa.encrypt(value,pubkey)
-	return base64.b64encode(urllib.quote_plus(crypto))
+	return base64.b16encode(crypto)
 
 def getServerAddr():
 	serverFile = open('ThreddServer')
 	return serverFile.read().strip()
 
 def Operation(Urls,Selection,Jobid):
-	jobStatus(Jobid,'running')
+	jobStatus(Jobid,'1')
 	urls = getUrls(Urls)
 	#filename = outputFileName(Selection,urls,Jobid)
 	filename = Jobid + '.nc'
