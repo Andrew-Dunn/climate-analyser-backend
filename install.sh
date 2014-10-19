@@ -73,12 +73,12 @@ cp zoo_loader.cgi /var/www/cgi-bin/
 cd ../../..
 ln -s /var/www/cgi-bin $PWD/cgi-bin
 
-cp Operation.{zcfg,py} cgi-bin
+cp * cgi-bin/
 
 rm -f /etc/httpd/conf/httpd.conf
 ln -s $PWD/httpd.conf /etc/httpd/conf/httpd.conf
 
-cp operators/* cgi-bin/
+#cp operators/ cgi-bin/
 
 $RUNASUSER bash <<EOS
 wget https://code.zmaw.de/attachments/download/8557/cdo-current.tar.gz

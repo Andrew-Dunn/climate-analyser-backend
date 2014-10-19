@@ -8,12 +8,14 @@ in other environments may require changes.
 git clone https://github.com/climate-analyser-team/climate-analyser-backend.git
 
 in the Climate analyzer folder, run the install.sh script.
-If no errors appear please berify that the /var/www/cgi-bin folder
+If no errors appear please verify that the /var/www/cgi-bin folder
 exists and that it works with apache as approite.
 Also please include a privateKey.pem and publicKey.pem (same as Django)
 as certain functions are dependant on authentication.
 
-./config_s3fs.sh Thredds	#This creates a folder that allows us to share resources
+sudo ./config_s3fs.sh Thredds	
+#This creates a folder that allows us to share resources
+Mount and unmount files should be kept in cgi-bin for ease of use
 
 It is recomended that you generate a key for munge or copy it over
 from another node. Which will be used in the next install 
@@ -34,6 +36,8 @@ To start up slurm use the following commands
 sudo munged
 sudo slurmctld	#Technically you can drop one or the other as appropite
 sudo slurmd	#But including both allows the Zoo server to act as a node
+Also run these and the mount_nectar.sh script when restarting the instance
+
 -------------------------------------------------
 
 JobScheduler.py:

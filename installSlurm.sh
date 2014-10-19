@@ -63,4 +63,5 @@ make install
 pip install drmaa
 pip install pydap
 pip install pydap.responses.netcdf
+pip install rsa
 
