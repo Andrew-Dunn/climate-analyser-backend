@@ -1,9 +1,12 @@
 #
-# CDO Operations
+# Job Select tool
 # Author:		Robert Sinn
-# Last modified: xx xx 2014
+# Last modified: 17 10 2014
 #
-# This file is part of Climate Analyser.
+# This file is part of Climate Analyser. By importing the "operators"
+# folder, any python file can be used so long as the name is passed
+# in and the file contains a run(input[],output[]) function. So long as
+# the python file is valid.
 #
 # Climate Analyser is free software: you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -24,33 +27,20 @@ import sys
 from operators import *
 import operators as ops
 
-def checkOp(operation,option,inputFiles,outputFiles,incount = -1,outcount = -1):
-	if option == operation:
-		if len(inputFiles) != incount and incount != -1:
-			raise Exception("Insufficent input files")
-		if len(outputFiles) != outcount and outcount != -1:
-			raise Exception("Insufficent output files")
-		return 1
-
-	return 0
-
 def jobSelect(op,inputFiles,outputFiles):
+	#CDO operators can be called with the prefix "cdo-" by doing so any
+	#cdo operator can be used so long as the correct number of files are
+	#passed in
 	if op.startswith('cdo-'):
 		func = ops.cdoOps.cdoOps(op.split('-')[1],inputFiles,outputFiles)
 		func(input = ops.cdoOps.cdoCallString(inputFiles)
 			,output = ops.cdoOps.cdoCallString(outputFiles))
 		return
-
-	#if checkOp('correlate',op,inputFiles,outputFiles,2,1):
-	#	func = correlate.run(inputFiles[0],inputFiles[1],outputFiles[0])
-	#elif checkOp('convolute',op,inputFiles,outputFiles,2,1):
-	#	func = convolute.run(inputFiles[0],inputFiles[1],outputFiles[0])
-	#else:
 	
-	mod = getattr(ops,op)
-	func = getattr(mod,'run')
+	mod = getattr(ops,op)	#returns operation
+	func = getattr(mod,'run')  #returns operation.run
 	
-	func(inputFiles,outputFiles)
+	func(inputFiles,outputFiles) #Run selected operation
 
 if __name__ == '__main__':
     exitCode = jobSelect(sys.argv[1],sys.argv[2].split(','),sys.argv[3].split(','))

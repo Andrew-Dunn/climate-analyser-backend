@@ -1,9 +1,12 @@
 #
-# Zoo Adapter for Correlate
+# Operation Manager
 # Author:		Robert Sinn
-# Last modified: 13 May 2014
+# Last modified: 20 10 2014
 #
-# This file is part of Climate Analyser.
+# This file is part of Climate Analyser. The Operation script runs the
+# encompassing process that sets up the relevant files. Checks for
+# duplicates, sets the job status for the Django server and passes the
+# Job over to the Job Selector
 #
 # Climate Analyser is free software: you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -21,124 +24,158 @@
 #
 
 import sys
-import zoo
 import requests
-import correlation
-import regresion
+import jobSelect
 import os.path
 import os
 import string
 import random
+import rsa
+import urllib
+import base64
+import re
 
-def getFileNameFromUrl(url):
-		return url.rsplit('/',1)[1].split('?',1)[0]
+from cdo import *
 
-def getDownloadLocation(url):
-	return "/var/www/cgi-bin/Thredds/inputs/" + getFileNameFromUrl(url)
+def getFileNameFromInput(inputFile):
+	#Excludes variables from name
+	return inputFile.split('?',1)[0]
 
-def getLocation(url,serverAddr):
-	if localFile(url):
-		return dataLink(serverAddr,getFileNameFromUrl(url),getVariables(url))	
-	else:
-		#if "http" not in url:
-		#	url = "http" + url
-		return url
-	#return "/var/www/cgi-bin/Thredds/inputs/" + getFileNameFromUrl(url)
+def getLocation(inputFile):
+	return ("/var/www/cgi-bin/Thredds/inputs/" 
+							+ getFileNameFromInput(inputFile))
 
-def getVariables(url):
-	if "?" in url:
-		return "?" + url.rsplit('/',1)[1].split('?',1)[1]
+def dataLink(serverAddr,inputFile):
+	#Creates a opendap url including relevant variables.
+	loc = (serverAddr + "/thredds/dodsC/datafiles/inputs/" + 
+						getFileNameFromInput(inputFile))
+	return (loc + getVariables(loc+'.dds', inputFile))
+
+def getVariables(loc,inputFile):
+	if "?" in inputFile:
+		return "?" + ddsVariables(loc,inputFile.split('?',1)[1].split(','))
 	else:
 		return ""
 
-def dataLink(serverAddr,filename,variables):
-	return (serverAddr + "/thredds/dodsC/datafiles/inputs/" + filename + variables)
+def ddsVariables(url,grids):
+	#get all Maps associated with grids
+        vars = []
+        output = urllib.urlopen(url).read()
+        for grid in grids:
+                vars += varSearch(grid,output)
+        return ','.join(list(set(vars + grids)))
 
-def outputFileName(operation,urls):
-	name = str(operation)
-	for url in urls:
-		name += '_' + getFileNameFromUrl(url).strip('.nc')
-	if any('?' in url for url in urls):
-		name += ("-V" + str(id_generator()))
-		if readFileExistsInThredds("/var/www/cgi-bin/Thredds/outputs/"+name+'.nc'):
-			return outputFileName
-	name += '.nc'
-	return name
-  
-def id_generator(chars=string.ascii_uppercase + string.digits):
-	name = ''.join(random.choice(chars) for _ in range(5))
-	return name
+def varSearch(grid,output):
+        varstring = re.search(grid+'(.*);',output).group(1)
+        varstring = varstring.strip('[').strip(']')
+        return arrayScrub(varstring.split(']['))
+
+def arrayScrub(inputs):
+        for x in range(0, len(inputs)):
+                inputs[x] = inputs[x].split(' = ')[0]
+        return inputs
+
+def compileVarArray(serverAddr,inputs):
+	#Creates list of dataLinks for use by JobSelect
+        for x in range(0, len(inputs)):
+                inputs[x] = dataLink(serverAddr,inputs[x])
+        return inputs
+
 
 def readFileExistsInThredds(name):
 	return os.path.isfile(name)
 
-def filecheck(urls):
-	for url in urls:
-		if readFileExistsInThredds(getDownloadLocation(url)) == 0:
-			if localFile(url):
-				downloadFile(url)
+def filecheck(inputs):
+	#Deprecated, remains  avalible so that url downloading support
+	#can be re-added
+	for inputFile in inputs:
+		if readFileExistsInThredds(getLocation(inputFile)) == 0:
+			downloadFile(inputFile)
 
 def localFile(url):
+	#Deprecated
 	if not "/dodsC/" in url:
 		return 1
 	else:
 		return 0
 
 def downloadFile(url):
-	filePath = getDownloadLocation(url)
-	r = requests.get(url)
-	f = open(filePath, 'wb')
-	for chunk in r.iter_content(chunk_size=512 * 1024): 
-		if chunk: # filter out keep-alive new chunks
-			f.write(chunk)
-	f.close()
+	#Deprecated, remains  avalible so that url downloading support
+	#can be re-added
+	if localFile(url):
+		filePath = getLocation(url)
+		r = requests.get(url)
+		f = open(filePath, 'wb')
+		for chunk in r.iter_content(chunk_size=512 * 1024): 
+			if chunk: # filter out keep-alive new chunks
+				f.write(chunk)
+		f.close()
+	else:
+		cdo = Cdo()
+		print url.split('?',1)[0]
+    		cdo.copy(input = url.split('?',1)[0], output = getLocation(url))
 	return 
 
-def resultOut(filename,serverAddr):
-	outputLink = "[opendap]"
-	outputLink += (serverAddr + "/thredds/catalog/datafiles/outputs/catalog.html?dataset=climateAnalyserStorage/outputs/" + filename)
-	outputLink += "[/opendap]"
-	outputLink += "[ncfile]"
-	outputLink += (serverAddr + "/thredds/fileServer/datafiles/outputs/" + filename)
-	outputLink += "[/ncfile]"
-	outputLink += "[wms]"
-	outputLink += (serverAddr + "/thredds/wms/datafiles/outputs/" + filename + "?service=WMS&version=1.3.0&request=GetCapabilities")
-	outputLink += "[/wms]"
-	return outputLink
+def getinputs(inputFiles):
+	#Deprecated, remains  avalible so that url downloading support
+	#can be re-added
+	inputs = inputFiles.split(",http")
+        for x in range(1, len(inputs)):
+                inputs[x] = 'http' + inputs[x]
+	return inputs
 
-def getUrls(inputUrls):
-	urls = inputUrls.split(",http")
-        for x in range(1, len(urls)):
-                urls[x] = 'http' + urls[x]
+def jobStatus(jobid,status):
+	#Contact the Django server to notify it of the job status
+	djangoFile = open('DjangoServer')
+	djangoAddr = djangoFile.read().strip()
+	publicfile = open('publicKey.pem')
+	pubdata = publicfile.read()
+	pubkey = rsa.PublicKey.load_pkcs1(pubdata)
+	
+	wCall = djangoAddr + '/update_computation_status?id='
+	wCall += encryptField(pubkey,jobid)
+	wCall += '&status='
+	wCall += encryptField(pubkey,status)
+	urllib.urlopen(wCall)
 
-	return urls
+def encryptField(pubkey, value):
+	crypto = rsa.encrypt(value,pubkey)
+	return base64.b16encode(crypto) #Encoding used for url compatibility
 
-def Operation(conf,inputs,outputs):
-	urls = getUrls(inputs["urls"]["value"])
-	filename = outputFileName(inputs["selection"]["value"],urls)
-	outputFile = "/var/www/cgi-bin/Thredds/outputs/" + filename
+def getServerAddr():
 	serverFile = open('ThreddServer')
-	serverAddr = serverFile.read().strip()
-	if len(urls) < 1:
-			conf["lenv"]["message"] = "There has to be atleast one dataset"
-			return zoo.SERVICE_FAILED
+	return serverFile.read().strip()
+
+def Operation(Inputs,Selection,Jobid):
+	jobStatus(Jobid,'1') #Start of Job
+	inputs = Inputs.split('|')
+	filename = Jobid + '.nc'
+	outputFile = "/var/www/cgi-bin/Thredds/outputs/" + filename
+
+	serverAddr = getServerAddr()
+	if len(inputs) < 1:
+		jobStatus(Jobid,'3') #Not enough files
+		return
 	try:
 		if readFileExistsInThredds(outputFile):
-		        outputs["Result"]["value"]=(resultOut(filename,serverAddr))
-		        return zoo.SERVICE_SUCCEEDED
-			#os.remove(outputFile)
+			jobStatus(Jobid,'2') #File already exists
+		        return
 	except:
-		conf["lenv"]["message"] = "Could not open '" + outputFile + "' for writing."
-		return zoo.SERVICE_FAILED
-       
-	filecheck(urls)
-
-	if inputs["selection"]["value"] == "correlate":
-		result = correlation.runCorrelate(getLocation(urls[0],serverAddr),
-				getLocation(urls[1],serverAddr), outputFile)
-	if inputs["selection"]["value"] == "regres":
-		regresion.runRegres(getLocation(urls[0],serverAddr),outputFile)
+		jobStatus(Jobid,'4')
+		return # "Could not open outputFile for writing." 
 	
-        outputs["Result"]["value"]=(resultOut(filename,serverAddr))
+        jobSelect.jobSelect(Selection,compileVarArray(serverAddr,inputs),[outputFile])
 
-	return zoo.SERVICE_SUCCEEDED
+	jobStatus(Jobid,'2') #Success
+        return  
+
+def main():
+        try:
+                Operation(sys.argv[1],sys.argv[2],sys.argv[3])
+        except Exception as e:
+                jobStatus(sys.argv[3],'7') #Operation Failed
+                raise e
+
+if __name__ == '__main__':
+        exitCode = main()
+        exit(exitCode)
