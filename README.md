@@ -1,7 +1,40 @@
 bom-backend
 ===========
 
-ZOO server, coordinates compute cloud.
+Install:
+This project was originally created using Centos 6.5 As such it's use
+in other environments may require changes.
+
+git clone https://github.com/climate-analyser-team/climate-analyser-backend.git
+
+in the Climate analyzer folder, run the install.sh script.
+If no errors appear please berify that the /var/www/cgi-bin folder
+exists and that it works with apache as approite.
+Also please include a privateKey.pem and publicKey.pem (same as Django)
+as certain functions are dependant on authentication.
+
+./config_s3fs.sh Thredds	#This creates a folder that allows us to share resources
+
+It is recomended that you generate a key for munge or copy it over
+from another node. Which will be used in the next install 
+dd if=/dev/urandom bs=1 count=1024 >munge.key
+
+A slurm.conf file is included but it will have to be set up to suit your
+configuaration. Also note that the /etc/hosts file may need to be
+updated to provide addresses for the nodes 
+
+run installSlurm.sh
+
+To properly use Cdo tools you may need to edit the cdo.py script.
+By default edit the file /usr/lib/python2.6/site-packages/cdo.py
+and replace the line(64): self.CDO = 'cdo'
+With: self.CDO = '/usr/local/bin/cdo'
+
+To start up slurm use the following commands
+sudo munged
+sudo slurmctld	#Technically you can drop one or the other as appropite
+sudo slurmd	#But including both allows the Zoo server to act as a node
+-------------------------------------------------
 
 JobScheduler.py:
 Called through the Zoo WPS, the scheduler starts the job using Slurm

@@ -6,15 +6,12 @@ import base64
 def ChangeDjango(conf,inputs,outputs):
 	crypto = inputs["url"]["value"]
 	
-	privatefile = open('rsa/privateKey.pem')
+	privatefile = open('privateKey.pem')
 	keydata = privatefile.read()
 	privatekey = rsa.PrivateKey.load_pkcs1(keydata)
 	unquote = base64.b16decode(crypto)
-	#try:
+
 	newurl = rsa.decrypt(unquote,privatekey)
-	#except:
-	#	conf["lenv"]["message"] = str(inputs)
-	#        return zoo.SERVICE_FAILED
 
 	DjangoServer = open('DjangoServer','w')
 	DjangoServer.write(newurl)
