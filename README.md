@@ -17,13 +17,19 @@ sudo ./config_s3fs.sh Thredds
 #This creates a folder that allows us to share resources
 Mount and unmount files should be kept in cgi-bin for ease of use
 
+Change the Address in the DjangoServer file to the Django address,
+to enable notifications.
+Also set the address in the ThreddServer file.
+
 It is recomended that you generate a key for munge or copy it over
 from another node. Which will be used in the next install 
 dd if=/dev/urandom bs=1 count=1024 >munge.key
 
 A slurm.conf file is included but it will have to be set up to suit your
 configuaration. Also note that the /etc/hosts file may need to be
-updated to provide addresses for the nodes 
+updated to provide addresses for the nodes.
+It is also recomended that all nodes be added to a security group
+opening ports to the other nodes.
 
 run installSlurm.sh
 

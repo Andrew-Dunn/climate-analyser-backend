@@ -26,7 +26,7 @@ import zoo
 
 def callCommand(option):
 	#Call slurm commands and return output.
-	ret = subprocess.Popen([option], stdout=subprocess.PIPE)
+	ret = subprocess.Popen([option], stdout=subprocess.PIPE,shell=True)
 	return ret.communicate()[0] + '\n'
 
 def slurmInfo(conf,inputs,outputs):
