@@ -7,11 +7,22 @@ fi
 
 RUNASUSER="sudo -u $SUDO_USER"
 
+
 yum -y install tar bzip2 gcc gcc-c++ autoconf bison flex patch httpd git python-pip
-yum -y install gdal-devel libxml2-devel python-devel libcurl-devel openssl-devel netcdf4-python netcdf-devel
+#yum-y install gdal-devel #Appears some issues have arisen in this package
+yum -y install libxml2-devel python-devel libcurl-devel openssl-devel netcdf4-python netcdf-devel
 
 $RUNASUSER bash <<EOS
 git clone https://github.com/climate-analyser-team/operators.git
+
+curl http://download.osgeo.org/gdal/gdal-1.5.3.tar.gz -o gdal-1.5.3.tar.gz
+tar -zvxf gdal-1.5.3.tar.gz
+rm gdal-1.5.3.tar.gz
+cd gdal-1.5.3
+./configure
+make
+make install
+cd ..
 
 curl http://www.zoo-project.org/dl/zoo-project-1.3.0.tar.bz2 -o zoo-project-1.3.0.tar.bz2
 tar -xjf zoo-project-1.3.0.tar.bz2
@@ -78,17 +89,19 @@ cp * cgi-bin/
 rm -f /etc/httpd/conf/httpd.conf
 ln -s $PWD/httpd.conf /etc/httpd/conf/httpd.conf
 
-#cp operators/ cgi-bin/
+mkdir /var/www/cgi-bin/operators
+cp operators/* cgi-bin/operators/
 
 $RUNASUSER bash <<EOS
-wget https://code.zmaw.de/attachments/download/8557/cdo-current.tar.gz
-tar -xzf cdo-current.tar.gz
+#If needed find the latest at https://code.zmaw.de/projects/cdo/files
+wget https://code.zmaw.de/attachments/download/8376/cdo-1.6.4.tar.gz
+tar -xzf cdo-1.6.4.tar.gz
 EOS
 
 cd $(ls -d cdo*/)
 
 $RUNASUSER bash <<EOS
-./configure --with-netcdf=yes --with-hdf5=yes
+./configure  --with-netcdf=/usr --with-hdf5=/usr
 make
 EOS
 make install

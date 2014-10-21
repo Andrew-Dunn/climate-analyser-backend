@@ -4,20 +4,6 @@ exit 1
 fi
 RUNASUSER="sudo -u $SUDO_USER"
 
-wget ftp://ftp.unidata.ucar.edu/pub/netcdf/netcdf-4.3.2.tar.gz
-tar xf netcdf-4.3.2.tar.gz 
-cd netcdf-*/
-./configure
-make
-make install
-
-wget https://code.zmaw.de/attachments/download/8591/cdo-current.tar.gz
-tar xf cdo-current.tar.gz 
-cd cdo-*/
-./configure --with-netcdf=/usr --with-hdf5=/usr
-make
-make install
-
 
 yum -y groupinstall "Development tools"
 yum -y install readline-devel
@@ -28,7 +14,6 @@ yum -y install perl-DBI
 yum -y install mailx
 yum -y install gperf
 
-cp slurm.conf /etc/slurm/slurm.conf
 yum -y install munge
 chown root /etc/munge
 chown root /var/lib/munge
@@ -39,16 +24,18 @@ cp munge.key /etc/munge/munge.key
 chown root /etc/munge/munge.key
 chmod 700 /etc/munge/munge.key
 
-curl http://www.schedmd.com/download/latest/slurm-14.03.7.tar.bz2 -o slurm-14.03.7.tar.bz2
+#Download found at http://www.schedmd.com/#archives
+curl http://www.schedmd.com/download/latest/slurm-14.03.9.tar.bz2 -o slurm-14.03.9.tar.bz2
 rpmbuild -ta slurm*.tar.bz2
 rpm -i /root/rpmbuild/RPMS/x86_64/slurm-*
+cp slurm.conf /etc/slurm/slurm.conf
 
 mkdir /slurm
 chown ec2-user /slurm
 
-curl http://www.complang.org/ragel/ragel-6.8.tar.gz -o ragel.tar.gz
+curl http://www.colm.net/wp-content/uploads/2014/10/ragel-6.9.tar.gz -o ragel.tar.gz
 tar -xf ragel.tar.gz
-cd ragel-6.8
+cd ragel-6.9
 ./configure --prefix=/
 make
 make install
@@ -59,6 +46,8 @@ cd slurm-drmaa/trunk/
 ./configure  --with-slurm-inc=/usr/include/slurm --with-slurm-lib=/usr/lib64/slurm --prefix=/
 make
 make install
+cp /lib/libdrmaa* /lib64
+
 
 pip install drmaa
 pip install pydap
