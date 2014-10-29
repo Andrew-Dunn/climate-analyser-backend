@@ -9,7 +9,7 @@ RUNASUSER="sudo -u $SUDO_USER"
 
 
 yum -y install tar bzip2 gcc gcc-c++ autoconf bison flex patch httpd git python-pip
-#yum-y install gdal-devel #Appears some issues have arisen in this package
+#yum -y install gdal-devel #Appears some issues have arisen in this package
 yum -y install libxml2-devel python-devel libcurl-devel openssl-devel netcdf4-python netcdf-devel
 
 $RUNASUSER bash <<EOS
@@ -61,7 +61,7 @@ cd thirds/cgic*
 
 $RUNASUSER bash <<EOS
 sed -e "s:/usr/lib\(64\)\{0,1\}/libfcgi\.so:-lfcgi:g" Makefile > Makefile.tmp \
-    && mv Makefile.tmp Makefile
+&& mv Makefile.tmp Makefile
 make
 make install
 EOS
